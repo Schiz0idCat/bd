@@ -20,7 +20,8 @@ DROP TABLE IF EXISTS
     languages,
     language_types,
     crew_roles,
-    release_types
+    release_types,
+    certifications
 CASCADE;
 
 -- ============================================================================
@@ -93,6 +94,15 @@ CREATE TABLE crew_roles (
 CREATE TABLE release_types (
     release_type_id SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name            VARCHAR(50) NOT NULL UNIQUE
+);
+
+-- Clasificación por edades.
+CREATE TABLE certifications (
+    certification_id SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name             VARCHAR(10) NOT NULL UNIQUE,
+
+    CONSTRAINT certifications_name_not_blank
+        CHECK (btrim(name) <> '')
 );
 
 -- ============================================================================
@@ -213,21 +223,20 @@ CREATE INDEX idx_movie_crew_role
 -- ============================================================================
 
 CREATE TABLE releases (
-    movie_id        INTEGER  NOT NULL
+    movie_id         INTEGER  NOT NULL
         REFERENCES movies(movie_id) ON DELETE CASCADE,
-    country_id      SMALLINT NOT NULL
+    country_id       SMALLINT NOT NULL
         REFERENCES countries(country_id),
-    release_date    DATE     NOT NULL,
-    release_type_id SMALLINT NOT NULL
+    release_date     DATE     NOT NULL,
+    release_type_id  SMALLINT NOT NULL
         REFERENCES release_types(release_type_id),
-    rating          VARCHAR(10), -- TODO: Esto debería ser una tabla aparte, falta normalizar
+    certification_id SMALLINT
+        REFERENCES certifications(certification_id),
 
     PRIMARY KEY (movie_id, country_id, release_date, release_type_id),
 
     CONSTRAINT releases_date_range
-        CHECK (release_date BETWEEN DATE '1870-01-01' AND DATE '2100-12-31'),
-    CONSTRAINT releases_rating_not_blank
-        CHECK (rating IS NULL OR btrim(rating) <> '')
+        CHECK (release_date BETWEEN DATE '1870-01-01' AND DATE '2100-12-31')
 );
 
 CREATE INDEX idx_releases_country
@@ -236,6 +245,8 @@ CREATE INDEX idx_releases_date
     ON releases (release_date);
 CREATE INDEX idx_releases_type
     ON releases (release_type_id);
+CREATE INDEX idx_releases_certification
+    ON releases (certification_id);
 
 -- ============================================================================
 -- ÍNDICES DE CONSULTA SOBRE PELÍCULAS
