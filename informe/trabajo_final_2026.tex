@@ -1,0 +1,95 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{mathptmx}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+\setlist[itemize]{leftmargin=*, itemsep=2pt, topsep=4pt}
+\pagestyle{empty}
+
+\begin{document}
+
+\begin{center}
+    {\large\bfseries PONTIFICIA UNIVERSIDAD CATÓLICA DE VALPARAÍSO}\\[0.3em]
+    Facultad de Ingeniería\\[0.2em]
+    Escuela de Ingeniería Informática\\[1.2em]
+    {\Large\bfseries TRABAJO FINAL}\\[0.4em]
+    INF3541-2 \quad TALLER DE BASE DE DATOS
+\end{center}
+
+\vspace{0.4em}
+\hrule
+\vspace{1em}
+
+Como finalización de Ramo, deberán entregar un trabajo realizado en el Sistema
+Administrador de Bases de Datos PostgresSQL el cual consiste en implementar una
+base de datos a partir de un gran conjunto de datos, según elección en listado
+Adjunto.
+
+\begin{itemize}
+    \item Seleccione un conjunto de datos con una cantidad considerables de
+    registros, que al normalizarlo obtenga alrededor de 10 tablas y que sea
+    reciente (año 2025 o 2026), desde alguno de estos sitios:
+    \begin{itemize}
+        \item \url{https://www.kaggle.com/datasets}
+        \item \url{https://datahub.io/collections}
+        \item Búsqueda por temas en
+        \url{https://datasetsearch.research.google.com}
+    \end{itemize}
+
+    \item Modele y cargue el set de datos elegido. El modelo creado debe manejar
+    control total de integridad y reglas del negocio totalmente controladas
+    mediante el uso de \texttt{constraint} y/o \texttt{triggers}.
+
+    \item Sobre el modelo cargado, genere:
+    \begin{itemize}
+        \item Uso de \texttt{triggers} para manejo de Logs de transacciones sobre
+        tabla (s) principal.
+
+        \item Generación de procedimientos almacenados para los mantenedores de
+        las tablas. Al menos uno de ellos debe implementar alguna regla del
+        negocio (validación, etc). Debe manejar correctamente las transacciones.
+
+        \item Generación de consultas (informes) los cuales deben incluir
+        consultas complejas (\texttt{subqueries}).
+        \begin{itemize}
+            \item Realice una consulta restringiendo los datos, que haga uso del
+            operadores OR, operador IN, UNION o usando enlazando las tablas por
+            el \texttt{where} (sin uso de la sentencia \texttt{join}).
+
+            \item Realice una consulta equivalente a la anterior (que retorne los
+            mismos resultados), pero que la sentencia sea distinta. Comprare
+            ambos planes de ejecución, y trate de mejorarlos, ya sea modificando
+            la consulta y/o creando índices.
+        \end{itemize}
+
+        \item Manejo de usuario con distinto nivel de acceso a los datos (incluso
+        con filtros mediante vistas).
+    \end{itemize}
+\end{itemize}
+
+\medskip
+
+\noindent\textbf{Forma de entrega:} Se debe entregar un archivos ZIP que contenga
+script de creación de la base de datos, la carga de los datos a tabla temporal y
+el traspaso de los datos a tablas del modelo. Además entregar script de las
+funciones / \texttt{triggers} / consultas, y en forma adicional un informe en PDF
+muestre las tareas realizadas, los planes de ejecución previo y posterior a las
+modificaciones, y las conclusiones de la optimización de consulta.
+
+\medskip
+
+\noindent\textbf{Fecha Máxima selección del tema:} martes 10 de noviembre.
+
+\medskip
+
+\noindent\textbf{Fecha Entrega final:} miércoles 25 de noviembre.
+
+\end{document}
