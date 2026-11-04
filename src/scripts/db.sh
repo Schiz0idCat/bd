@@ -4,7 +4,7 @@ set -euo pipefail
 # Cada ejecución borra la base y la crea de nuevo desde init.sql.
 
 DB_NAME="${PGDATABASE:-peliculas}"
-SCHEMA="$(cd -- "$(dirname -- "$0")" && pwd)/../init.sql"
+SCHEMA="$(cd -- "$(dirname -- "$0")" && pwd)/../sql/init.sql"
 
 if psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" | grep -q 1; then
     echo "Borrando base de datos: '$DB_NAME'..."
