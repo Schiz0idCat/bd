@@ -10,7 +10,6 @@ DROP TABLE IF EXISTS
     movie_countries,
     movie_studios,
     releases,
-    posters,
     movies,
     people,
     studios,
@@ -36,20 +35,14 @@ CREATE TABLE movies (
     description     TEXT,
     minute          INTEGER,
     rating          NUMERIC(3,2),
+    poster_link     TEXT,
 
     CONSTRAINT movies_name_not_blank  CHECK (btrim(name) <> ''),
     CONSTRAINT movies_year_range      CHECK (release_year BETWEEN 1870 AND 2100),
     CONSTRAINT movies_minute_positive CHECK (minute > 0),
-    CONSTRAINT movies_rating_range    CHECK (rating BETWEEN 0 AND 5)
-);
-
-CREATE TABLE posters (
-    movie_id INTEGER PRIMARY KEY
-        REFERENCES movies(movie_id) ON DELETE CASCADE,
-    link     TEXT,
-
-    CONSTRAINT posters_link_not_blank
-        CHECK (link IS NULL OR btrim(link) <> '')
+    CONSTRAINT movies_rating_range    CHECK (rating BETWEEN 0 AND 5),
+    CONSTRAINT movies_poster_link_not_blank
+        CHECK (poster_link IS NULL OR btrim(poster_link) <> '')
 );
 
 -- ============================================================================
