@@ -120,9 +120,7 @@ crearan antes, registrarían las 941.597 inserciones iniciales.
 | Rol | Acceso |
 |---|---|
 | `bd_lectura` | Solo vistas públicas (`vw_movies_public`, `vw_movies_recent`, `vw_releases_public`, `vw_movie_cast_public`) |
-| `bd_analista` | `SELECT` sobre todas las tablas y vistas |
 | `bd_mantenedor` | `SELECT` + `DML` sobre las tablas mantenidas + ejecución de procedimientos |
-| `bd_auditor` | `SELECT` sobre el modelo y `audit_log` |
 | `bd_admin` | Control total |
 
 Los roles son `NOLOGIN`. Para un usuario real:

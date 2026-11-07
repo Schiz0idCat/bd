@@ -8,9 +8,7 @@
 --
 -- Niveles:
 --   bd_lectura     -> solo vistas públicas (columnas y filas filtradas)
---   bd_analista    -> lectura completa del modelo, sin escritura
 --   bd_mantenedor  -> ejecuta los procedimientos de mantenimiento
---   bd_auditor     -> lee el log de auditoría y el modelo
 --   bd_admin       -> control total
 --
 --   psql -d peliculas -f src/sql/93_roles.sql
@@ -23,14 +21,8 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'bd_lectura') THEN
         CREATE ROLE bd_lectura NOLOGIN;
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'bd_analista') THEN
-        CREATE ROLE bd_analista NOLOGIN;
-    END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'bd_mantenedor') THEN
         CREATE ROLE bd_mantenedor NOLOGIN;
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'bd_auditor') THEN
-        CREATE ROLE bd_auditor NOLOGIN;
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'bd_admin') THEN
         CREATE ROLE bd_admin NOLOGIN;
@@ -42,8 +34,7 @@ END $$;
 -- ----------------------------------------------------------------------------
 
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
-GRANT USAGE ON SCHEMA public
-    TO bd_lectura, bd_analista, bd_mantenedor, bd_auditor, bd_admin;
+GRANT USAGE ON SCHEMA public TO bd_lectura, bd_mantenedor, bd_admin;
 GRANT CREATE ON SCHEMA public TO bd_admin;
 
 -- ----------------------------------------------------------------------------
@@ -71,12 +62,6 @@ GRANT SELECT ON
 TO bd_lectura;
 
 -- ----------------------------------------------------------------------------
--- bd_analista: lectura completa para informes
--- ----------------------------------------------------------------------------
-
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO bd_analista;
-
--- ----------------------------------------------------------------------------
 -- bd_mantenedor: mantenedores a través de procedimientos
 -- ----------------------------------------------------------------------------
 -- Los procedimientos no son SECURITY DEFINER (lo que permite usar COMMIT y
@@ -97,13 +82,6 @@ GRANT INSERT, UPDATE, DELETE ON
 TO bd_mantenedor;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO bd_mantenedor;
 GRANT EXECUTE ON ALL PROCEDURES IN SCHEMA public TO bd_mantenedor;
-
--- ----------------------------------------------------------------------------
--- bd_auditor: lectura del log y del modelo
--- ----------------------------------------------------------------------------
-
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO bd_auditor;
-GRANT SELECT ON audit_log TO bd_auditor;
 
 -- ----------------------------------------------------------------------------
 -- bd_admin: control total

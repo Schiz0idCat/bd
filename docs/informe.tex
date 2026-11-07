@@ -125,11 +125,6 @@ scripts de \texttt{load} traspasan los datos con, aplicando \texttt{CAST},
 \texttt{NULLIF}, \texttt{DISTINCT} y \texttt{JOIN} para resolver los catálogos
 por nombre.
 
-El orden respeta las dependencias: películas, catálogos, personas, reparto y
-crew, y finalmente estrenos. Al terminar, \texttt{99\_validate.sql} verificó los
-conteos principales: 941.597 películas, 2.479.949 personas, 5.797.504 de
-reparto, 4.718.901 de crew, 1.332.782 estrenos y 693.476 países por película.
-
 % ============================================================================
 \section{Triggers de auditoría}
 % ============================================================================
@@ -161,13 +156,13 @@ Se implementaron cinco procedimientos para los mantenedores:
     \centering
     \begin{tabular}{p{4.3cm} p{9.5cm}}
         \hline
-        Procedimiento & Regla / comportamiento \\
+        Procedimiento & comportamiento \\
         \hline
         \texttt{sp\_movie\_upsert} &
-        Alta o modificación de una película. Exige nombre no vacío, año entre
-        1870 y 2100, duración positiva y rating entre 0 y 5. \\
+        Exige nombre no vacío, año entre 1870 y 2100,
+        duración positiva y rating entre 0 y 5. \\
         \texttt{sp\_movie\_delete} &
-        Baja de una película; las relaciones se eliminan por
+        Eliminación de una película. Las relaciones se eliminan por
         \texttt{ON DELETE CASCADE}. \\
         \texttt{sp\_studio\_delete} &
         No permite eliminar un estudio con películas asociadas. \\
@@ -209,7 +204,7 @@ diferencias.
 
 \subsection{Índices creados}
 
-Se crearon índices compuestos para evitar visitar el heap al buscar por género y
+Se crearon índices compuestos para buscar por género y
 por país, y un índice que cubre año y rating:
 
 \begin{verbatim}
@@ -254,15 +249,12 @@ La \autoref{tab:roles} resume los niveles de acceso.
         \hline
         \texttt{bd\_lectura} &
         Solo las vistas públicas. No puede leer las tablas base. \\
-        \texttt{bd\_analista} &
-        \texttt{SELECT} sobre todas las tablas y vistas, sin escritura. \\
         \texttt{bd\_mantenedor} &
         \texttt{SELECT}, \texttt{DML} sobre las tablas mantenidas y ejecución de
         los procedimientos. \\
-        \texttt{bd\_auditor} &
-        \texttt{SELECT} sobre el modelo y sobre \texttt{audit\_log}. \\
         \texttt{bd\_admin} &
-        Control total del esquema, tablas, secuencias y procedimientos. \\
+        Control total del esquema, tablas, secuencias, procedimientos y
+        \texttt{audit\_log}. \\
         \hline
     \end{tabular}
     \caption{Roles y niveles de acceso.}

@@ -159,14 +159,6 @@ SELECT count(*) AS estrenos_futuros FROM vw_releases_public
 WHERE release_date > CURRENT_DATE;
 RESET ROLE;
 
-\echo '-- bd_analista: puede leer las tablas base'
-SET ROLE bd_analista;
-SELECT count(*) AS peliculas FROM movies;
-
-\echo '-- bd_analista: NO puede escribir (DEBE FALLAR)'
-INSERT INTO studios (name) VALUES ('Estudio prohibido');
-RESET ROLE;
-
 \echo '-- bd_mantenedor: puede ejecutar procedimientos'
 SET ROLE bd_mantenedor;
 CALL sp_movie_upsert(999999999, 'Película de prueba', 2000, NULL, NULL, 90, 4.25, NULL);
@@ -175,8 +167,9 @@ CALL sp_movie_upsert(999999999, 'Película de prueba', 2000, NULL, NULL, 90, 4.2
 INSERT INTO genres (name) VALUES ('Género prohibido');
 RESET ROLE;
 
-\echo '-- bd_auditor: puede leer el log'
-SET ROLE bd_auditor;
+\echo '-- bd_admin: puede leer las tablas base y el log'
+SET ROLE bd_admin;
+SELECT count(*) AS peliculas FROM movies;
 SELECT count(*) AS registros_de_auditoria FROM audit_log;
 RESET ROLE;
 
