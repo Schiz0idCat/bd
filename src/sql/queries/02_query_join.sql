@@ -30,6 +30,6 @@ WHERE g.name IN ('Drama', 'Comedy')
       FROM movie_countries mc
       JOIN countries c ON c.country_id = mc.country_id
       WHERE mc.movie_id = b.movie_id
-        AND c.name = 'United States of America'
+        AND c.name = 'USA'
   )
 ORDER BY b.rating DESC, b.name;

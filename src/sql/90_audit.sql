@@ -102,6 +102,12 @@ CREATE TRIGGER trg_audit_log_no_truncate
 -- Triggers sobre las tablas principales
 -- ----------------------------------------------------------------------------
 
+-- Se eliminan primero para que el script se pueda ejecutar más de una vez.
+DROP TRIGGER IF EXISTS trg_audit_movies   ON movies;
+DROP TRIGGER IF EXISTS trg_audit_people   ON people;
+DROP TRIGGER IF EXISTS trg_audit_studios  ON studios;
+DROP TRIGGER IF EXISTS trg_audit_releases ON releases;
+
 CREATE TRIGGER trg_audit_movies
     AFTER INSERT OR UPDATE OR DELETE ON movies
     FOR EACH ROW

@@ -177,34 +177,75 @@ diferencias.
 
 \subsection{Planes antes de la optimización}
 
-[COMPLETAR: planes antes]
+Ambas consultas devuelven 71 películas. Con los índices base, el planificador
+usa dos índices de una columna y luego visita el heap:
+
+\begin{verbatim}
+Consulta A (WHERE, OR, IN)
+Unique (actual rows=71)
+  -> Bitmap Heap Scan on movies (actual rows=296)
+       -> BitmapAnd
+            -> Bitmap Index Scan on idx_movies_rating
+            -> Bitmap Index Scan on idx_movies_release_year
+Execution Time: 10.163 ms
+
+Consulta B (JOIN, CTE, EXISTS)
+Unique (actual rows=71)
+  -> Nested Loop Semi Join
+       -> Bitmap Heap Scan on movies (actual rows=296)
+            -> BitmapAnd
+                 -> Bitmap Index Scan on idx_movies_rating
+                 -> Bitmap Index Scan on idx_movies_release_year
+Execution Time: 5.891 ms
+\end{verbatim}
 
 \subsection{Índices creados}
 
-Se crearon índices compuestos para buscar por género y
-por país, y un índice que cubre año y rating:
+Se creó un índice que cubre el filtro de año y rating y devuelve las columnas
+del \texttt{SELECT} sin visitar el heap:
 
 \begin{verbatim}
-CREATE INDEX idx_movie_genres_genre_movie
-    ON movie_genres (genre_id, movie_id);
-
-CREATE INDEX idx_movie_countries_country_movie
-    ON movie_countries (country_id, movie_id);
-
 CREATE INDEX idx_movies_year_rating
     ON movies (release_year, rating) INCLUDE (movie_id, name);
 \end{verbatim}
 
-Los índices de una sola columna quedaron cubiertos por el prefijo de los nuevos
-y se eliminaron.
+También se probaron índices compuestos por género y por país, pero el
+planificador partía del catálogo y recorría cientos de miles de filas, por lo
+que resultaban más lentos. Se descartaron y se eliminaron los índices de una
+sola columna, porque las claves primarias de las relaciones ya cubren la
+búsqueda por \texttt{movie\_id}.
 
 \subsection{Planes después de la optimización}
 
-[COMPLETAR: planes después]
+Los dos planes cambian el acceso a \texttt{movies} por un \texttt{Index Only
+Scan} sobre el nuevo índice, sin visitar el heap:
+
+\begin{verbatim}
+Consulta A
+Unique (actual rows=71)
+  -> Index Only Scan using idx_movies_year_rating on movies
+       (actual rows=296)
+Execution Time: 1.766 ms
+
+Consulta B
+Unique (actual rows=71)
+  -> Nested Loop Semi Join
+       -> Index Only Scan using idx_movies_year_rating on movies
+            (actual rows=296)
+Execution Time: 4.287 ms
+\end{verbatim}
 
 \subsection{Conclusión de la optimización}
 
-[COMPLETAR: comparación de tiempos y conclusión]
+El costo estimado bajó de 3798 a 1236 en la consulta A y de 3837 a 1278 en la
+B. En la práctica, A pasó de 10.163 ms a 1.766 ms y B de 5.891 ms a 4.287 ms,
+con caché caliente y los mismos 71 resultados.
+
+La mejora se debe a que el filtro de año y rating se resuelve con un
+\texttt{Index Only Scan} que ya devuelve \texttt{movie\_id} y \texttt{name}.
+Los índices por género y país se descartaron porque inducían un plan que partía
+del catálogo y recorría 174.489 filas de \texttt{movie\_countries}, más lento
+que partir de las 296 películas filtradas.
 
 % ============================================================================
 \section{Usuarios y vistas}

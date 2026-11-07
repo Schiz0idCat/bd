@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # ============================================================================
-# Pruebas de objetos y comparación de planes de ejecución.
+# ETAPA 4: pruebas de objetos, equivalencia de consultas y planes de ejecución.
+#
+# Requiere haber ejecutado db.sh, staging.sh, load.sh y objects.sh.
+# Guarda los planes en docs/build/ (ignorado por git).
 #
 #   ./src/scripts/test.sh
-#
-# Guarda los planes en docs/build/ (ignorado por git) y los muestra en
-# pantalla. Requiere haber ejecutado db.sh, load.sh y objects.sh.
 # ============================================================================
 
 set -euo pipefail
@@ -13,7 +13,7 @@ set -euo pipefail
 ROOT="$(cd -- "$(dirname -- "$0")/../.." && pwd)"
 cd "$ROOT"
 
-DB="${PGDATABASE:-peliculas}"
+DB="peliculas"
 PSQL=(psql -X -v ON_ERROR_STOP=1 -d "$DB")
 OUT="$ROOT/docs/build"
 mkdir -p "$OUT"
@@ -22,6 +22,12 @@ run_plan() {
     local etiqueta="$1"
     local archivo="$2"
     local destino="$3"
+
+    # Se ejecuta una vez sin guardar para que el plan se mida con caché caliente.
+    {
+        echo "EXPLAIN (ANALYZE, BUFFERS, TIMING OFF)"
+        cat "$archivo"
+    } | psql -X -v ON_ERROR_STOP=1 -d "$DB" >/dev/null
 
     {
         echo "-- ============================================================"

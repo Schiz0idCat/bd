@@ -1,9 +1,5 @@
--- ============================================================================
--- SCHEMA DE TRASPASO (STAGING)
--- ============================================================================
--- Las tablas de este schema son un espejo de los CSV. No tienen FKs, CHECK ni
--- UNIQUE: la limpieza y validación se hacen en los scripts de load/.
--- ============================================================================
+-- Las tablas de este schema son un espejo de los CSV.
+-- No tienen ninguna lógica compleja SQL más allá de la misma definición de las tablas.
 
-DROP SCHEMA IF EXISTS staging CASCADE;
+DROP SCHEMA IF EXISTS staging CASCADE; -- Para la idempotencia.
 CREATE SCHEMA staging;

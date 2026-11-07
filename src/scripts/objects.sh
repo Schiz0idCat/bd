@@ -1,16 +1,12 @@
 #!/usr/bin/env bash
 # ============================================================================
-# Instala los objetos de la base: auditoría, procedimientos, vistas y roles.
+# ETAPA 3: instala los objetos sobre el modelo ya cargado.
 #
-# Debe ejecutarse DESPUÉS de cargar los datos, para que los triggers de
-# auditoría no registren las 941.597 inserciones de la carga masiva.
+# Cada script SQL es idempotente, por lo que este script se puede repetir.
+# Debe ejecutarse DESPUÉS de load.sh para que los triggers de auditoría no
+# registren las inserciones masivas.
 #
-# Uso:
 #   ./src/scripts/objects.sh
-#
-# Variables opcionales:
-#   PGDATABASE    nombre de la base (por defecto: peliculas)
-#   SKIP_ROLES=1  no crea los roles (útil si no se es superusuario)
 # ============================================================================
 
 set -euo pipefail
@@ -18,7 +14,7 @@ set -euo pipefail
 ROOT="$(cd -- "$(dirname -- "$0")/../.." && pwd)"
 cd "$ROOT"
 
-DB="${PGDATABASE:-peliculas}"
+DB="peliculas"
 PSQL=(psql -X -v ON_ERROR_STOP=1 -d "$DB")
 
 echo "==> Triggers de auditoría"
@@ -30,11 +26,7 @@ echo "==> Procedimientos almacenados"
 echo "==> Vistas"
 "${PSQL[@]}" -f src/sql/92_views.sql
 
-if [[ "${SKIP_ROLES:-0}" == "1" ]]; then
-    echo "==> Roles omitidos (SKIP_ROLES=1)"
-else
-    echo "==> Roles y permisos"
-    "${PSQL[@]}" -f src/sql/93_roles.sql
-fi
+echo "==> Roles y permisos"
+"${PSQL[@]}" -f src/sql/93_roles.sql
 
 echo "==> Objetos instalados."

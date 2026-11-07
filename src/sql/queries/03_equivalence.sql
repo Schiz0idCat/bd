@@ -14,7 +14,7 @@ WITH a AS (
       AND m.movie_id = mc.movie_id
       AND mc.country_id = c.country_id
       AND (g.name = 'Drama' OR g.name = 'Comedy')
-      AND c.name IN ('United States of America')
+      AND c.name IN ('USA')
       AND m.release_year BETWEEN 2000 AND 2009
       AND m.rating >= 4.0
 ),
@@ -34,7 +34,7 @@ b AS (
           FROM movie_countries mc
           JOIN countries c ON c.country_id = mc.country_id
           WHERE mc.movie_id = b.movie_id
-            AND c.name = 'United States of America'
+            AND c.name = 'USA'
       )
 )
 SELECT

@@ -20,10 +20,12 @@ releases.csv  languages.csv  countries.csv  genres.csv  themes.csv
 
 ## Fuente del dataset
 
-> **Completar antes de la entrega:** URL del dataset y autorización del profesor
-> para usar un conjunto de datos de 2024.
-
 El dataset original ocupa aproximadamente 801 MB y contiene 941.597 películas.
+Fue publicado en 2024, por lo que no cumple estrictamente el requisito de
+recencia; su uso fue autorizado por el profesor.
+
+Fuente: <https://www.kaggle.com/datasets/gsimonx37/letterboxd>
+
 El directorio `data/posters/` (imágenes, ~24 GB) no es utilizado por el modelo y
 no forma parte de la entrega.
 
@@ -38,6 +40,7 @@ src/
       01_movies.sql ... 10_releases.sql
                           un archivo por CSV: DDL + \copy
     load/
+      00_reset.sql        vacía el modelo para permitir recargas
       01_movies.sql ... 10_releases.sql
                           traspaso staging -> modelo
     90_audit.sql          tabla audit_log, función y triggers
@@ -47,35 +50,50 @@ src/
     94_tests.sql          pruebas de auditoría, procedimientos y permisos
     99_validate.sql       validación de conteos e integridad
     queries/
+      00_reset_indexes.sql restaura los índices base
       01_query_where.sql  consulta A (WHERE, OR, IN, sin JOIN)
       02_query_join.sql   consulta B equivalente (JOIN, CTE, EXISTS)
       03_equivalence.sql  verifica que A y B devuelvan lo mismo
       04_indexes.sql      índices de optimización
   scripts/
     db.sh                 crea la base y aplica init.sql
-    load.sh               staging + traspaso + ANALYZE + validación
+    staging.sh            CSV -> tablas de texto en staging
+    load.sh               staging -> modelo + ANALYZE + validación
     objects.sh            auditoría + procedimientos + vistas + roles
-    test.sh               ejecuta las pruebas y las consultas
+    test.sh               pruebas, equivalencia y planes de ejecución
+    package.sh            genera el ZIP de entrega
 ```
 
 ## Ejecución
+
+Cada etapa se ejecuta por separado y se puede repetir sin duplicar datos.
 
 ```bash
 # 1. Crear la base y el modelo (borra la base si ya existe)
 ./src/scripts/db.sh
 
-# 2. Cargar los CSV (staging -> modelo) y validar
+# 2. Copiar los CSV a las tablas de texto de staging
+./src/scripts/staging.sh
+
+# 3. Traspasar staging al modelo, analizar y validar
 ./src/scripts/load.sh
 
-# 3. Crear auditoría, procedimientos, vistas y roles
+# 4. Crear auditoría, procedimientos, vistas y roles
 ./src/scripts/objects.sh
 
-# 4. Probar los objetos y comparar los planes de las consultas
+# 5. Probar los objetos y comparar los planes de las consultas
 ./src/scripts/test.sh
+
+# 6. Generar el ZIP de entrega
+./src/scripts/package.sh
 ```
 
-Todas las variables se pueden ajustar con `PGDATABASE` (por defecto
-`peliculas`) y las variables estándar de `psql` (`PGHOST`, `PGPORT`, `PGUSER`).
+Los scripts usan siempre la base `peliculas`. La conexión se configura con las
+variables estándar de `psql` (`PGHOST`, `PGPORT`, `PGUSER`).
+
+Cada etapa es idempotente: `staging.sh` recrea el schema, `load.sh` vacía el
+modelo antes de cargar, `objects.sh` reemplaza sus objetos y `test.sh` restaura
+los índices antes de medir.
 
 ### Ejecución parcial
 
@@ -85,12 +103,6 @@ psql -d peliculas -f src/sql/staging/01_movies.sql
 
 # Solo el traspaso de películas
 psql -d peliculas -f src/sql/load/01_movies.sql
-
-# Liberar staging al terminar la carga
-DROP_STAGING=1 ./src/scripts/load.sh
-
-# Crear objetos sin roles (si no se es superusuario)
-SKIP_ROLES=1 ./src/scripts/objects.sh
 ```
 
 ## Modelo
