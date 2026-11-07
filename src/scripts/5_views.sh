@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # ============================================================================
-# ETAPA 6: crea los roles y asigna los permisos de acceso.
+# ETAPA 5: crea las vistas con filtros de filas y columnas.
 #
-# Idempotente: crea los roles solo si no existen y vuelve a aplicar los GRANT.
+# Idempotente: usa CREATE OR REPLACE VIEW.
 #
-#   ./src/scripts/roles.sh
+#   ./src/scripts/5_views.sh
 # ============================================================================
 
 set -euo pipefail
 
 cd "$(dirname -- "$0")/../.."
 
-psql -X -v ON_ERROR_STOP=1 -d peliculas -f src/sql/93_roles.sql
+psql -X -v ON_ERROR_STOP=1 -d peliculas -f src/sql/92_views.sql

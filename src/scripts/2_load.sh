@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
-# ============================================================================
-# ETAPA 2: traspasa staging al modelo real.
+
+# traspasa staging al modelo real.
 #
-# Idempotente: 00_reset.sql vacía el modelo antes de cada carga.
-#
-#   ./src/scripts/load.sh
-# ============================================================================
+# 00_reset.sql vacía el modelo antes de cada carga.
 
 set -euo pipefail
 

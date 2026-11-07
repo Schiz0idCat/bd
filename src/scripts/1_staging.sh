@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
-# ============================================================================
-# ETAPA 1: carga los CSV en las tablas de texto del schema staging.
+
+# carga los CSV en las tablas de texto del schema staging.
 #
-# Idempotente: 00_schema.sql elimina y recrea el schema completo.
-#
-#   ./src/scripts/staging.sh
-# ============================================================================
+# 00_schema.sql elimina y recrea el schema completo.
 
 set -euo pipefail
 

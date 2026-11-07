@@ -16,18 +16,26 @@
 
 BEGIN;
 
+-- Se eliminan y recrean para que el script siempre parta del mismo estado.
+-- DROP OWNED BY revoca los privilegios que tengan sobre los objetos.
 DO $$
+DECLARE
+    r TEXT;
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'bd_lectura') THEN
-        CREATE ROLE bd_lectura NOLOGIN;
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'bd_mantenedor') THEN
-        CREATE ROLE bd_mantenedor NOLOGIN;
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'bd_admin') THEN
-        CREATE ROLE bd_admin NOLOGIN;
-    END IF;
+    FOREACH r IN ARRAY ARRAY['bd_lectura', 'bd_mantenedor', 'bd_admin'] LOOP
+        IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = r) THEN
+            EXECUTE format('DROP OWNED BY %I', r);
+        END IF;
+    END LOOP;
 END $$;
+
+DROP ROLE IF EXISTS bd_admin;
+DROP ROLE IF EXISTS bd_mantenedor;
+DROP ROLE IF EXISTS bd_lectura;
+
+CREATE ROLE bd_lectura NOLOGIN;
+CREATE ROLE bd_mantenedor NOLOGIN;
+CREATE ROLE bd_admin NOLOGIN;
 
 -- ----------------------------------------------------------------------------
 -- Esquema: nadie crea objetos salvo el administrador

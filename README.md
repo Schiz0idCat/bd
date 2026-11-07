@@ -52,13 +52,13 @@ src/
       02_query_join.sql   consulta B equivalente (JOIN, CTE, EXISTS)
       03_indexes.sql      índices de optimización
   scripts/
-    db.sh                 crea la base y aplica init.sql
-    staging.sh            CSV -> tablas de texto en staging
-    load.sh               staging -> modelo + ANALYZE
-    triggers.sh           aplica 90_audit.sql
-    procedures.sh         aplica 91_procedures.sql
-    views.sh              aplica 92_views.sql
-    roles.sh              aplica 93_roles.sql
+    0_db.sh                 crea la base y aplica init.sql
+    1_staging.sh            CSV -> tablas de texto en staging
+    2_load.sh               staging -> modelo + ANALYZE
+    3_triggers.sh           aplica 90_audit.sql
+    4_procedures.sh         aplica 91_procedures.sql
+    5_views.sh              aplica 92_views.sql
+    6_roles.sh              aplica 93_roles.sql
 ```
 
 ## Ejecución
@@ -67,25 +67,25 @@ Cada etapa se ejecuta por separado y se puede repetir sin duplicar datos.
 
 ```bash
 # 1. Crear la base y el modelo (borra la base si ya existe)
-./src/scripts/db.sh
+./src/scripts/0_db.sh
 
 # 2. Copiar los CSV a las tablas de texto de staging
-./src/scripts/staging.sh
+./src/scripts/1_staging.sh
 
 # 3. Traspasar staging al modelo
-./src/scripts/load.sh
+./src/scripts/2_load.sh
 
 # 4. Crear auditoría, procedimientos, vistas y roles
-./src/scripts/triggers.sh
-./src/scripts/procedures.sh
-./src/scripts/views.sh
-./src/scripts/roles.sh
+./src/scripts/3_triggers.sh
+./src/scripts/4_procedures.sh
+./src/scripts/5_views.sh
+./src/scripts/6_roles.sh
 ```
 
 Los scripts usan siempre la base `peliculas`. La conexión se configura con las
 variables estándar de `psql` (`PGHOST`, `PGPORT`, `PGUSER`).
 
-Cada etapa es idempotente: `staging.sh` recrea el schema, `load.sh` vacía el
+Cada etapa es idempotente: `1_staging.sh` recrea el schema, `2_load.sh` vacía el
 modelo antes de cargar y los scripts de objetos usan `DROP ... IF EXISTS` o
 `CREATE OR REPLACE`.
 
@@ -118,7 +118,7 @@ El detalle del diseño, las decisiones y los planes de ejecución está en
 los datos anteriores y nuevos en `JSONB`, el usuario y la marca de tiempo. La
 tabla es append-only: triggers propios impiden `UPDATE`, `DELETE` y `TRUNCATE`.
 
-Los triggers se crean con `triggers.sh`, es decir, **después** de la carga. Si se
+Los triggers se crean con `3_triggers.sh`, es decir, **después** de la carga. Si se
 crearan antes, registrarían las 941.597 inserciones iniciales.
 
 ## Roles
