@@ -3,6 +3,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[spanish]{babel}
+\addto\captionsspanish{\renewcommand{\tablename}{Tabla}}
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{mathptmx}
 \usepackage{enumitem}
@@ -14,6 +15,7 @@
 \renewcommand{\figureautorefname}{Figura}
 \usepackage{microtype}
 \usepackage{graphicx}
+\usepackage{float}
 \usepackage{booktabs}
 
 \setlength{\parindent}{0pt}
@@ -58,32 +60,7 @@ recencia del enunciado, pero su uso fue autorizado por el profesor.
 
 \textit{Fuente: \url{https://www.kaggle.com/datasets/gsimonx37/letterboxd}.}
 
-\subsection{Archivos y volumen}
-
-El conjunto ocupa aproximadamente 801 MB y contiene 941.597 películas. La
-\autoref{tab:archivos} resume los archivos utilizados.
-
-\begin{table}[htbp]
-    \centering
-    \begin{tabular}{l r l}
-        \hline
-        Archivo & Filas & Contenido \\
-        \hline
-        \texttt{movies.csv}    &   941.597 & Películas \\
-        \texttt{posters.csv}   &   941.597 & Enlaces de póster \\
-        \texttt{actors.csv}    & 5.798.450 & Reparto \\
-        \texttt{crew.csv}      & 4.720.183 & Equipo técnico \\
-        \texttt{studios.csv}   &   679.283 & Estudios \\
-        \texttt{releases.csv}  & 1.332.782 & Estrenos por país y fecha \\
-        \texttt{languages.csv} & 1.038.762 & Idiomas \\
-        \texttt{countries.csv} &   693.476 & Países por película \\
-        \texttt{genres.csv}    & 1.046.849 & Géneros por película \\
-        \texttt{themes.csv}    &   125.641 & Temas por película \\
-        \hline
-    \end{tabular}
-    \caption{Archivos del dataset y cantidad de filas.}
-    \label{tab:archivos}
-\end{table}
+\clearpage
 
 % ============================================================================
 \section{Modelo de datos}
@@ -94,7 +71,7 @@ El conjunto ocupa aproximadamente 801 MB y contiene 941.597 películas. La
 El modelo tiene 19 tablas y está en tercera forma normal. La \autoref{fig:er}
 muestra el diagrama.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{../extra/db.png}
     \caption{Diagrama entidad-relación del modelo.}
