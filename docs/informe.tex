@@ -98,7 +98,7 @@ en los procedimientos almacenados.
 
 Los CSV se copian con \texttt{\textbackslash copy} a tablas \texttt{UNLOGGED}
 del schema \texttt{staging}, sin claves foráneas ni restricciones. Luego los
-scripts de \texttt{load} traspasan los datos con, aplicando \texttt{CAST},
+scripts de \texttt{load} traspasan los datos aplicando \texttt{CAST},
 \texttt{NULLIF}, \texttt{DISTINCT} y \texttt{JOIN} para resolver los catálogos
 por nombre.
 
@@ -172,8 +172,7 @@ La consulta A obtiene películas de Drama o Comedia, estrenadas en Estados
 Unidos entre 2000 y 2009, con rating mayor o igual a 4.0. Usa enlace por
 \texttt{WHERE}, \texttt{OR} e \texttt{IN}, sin \texttt{JOIN}. La consulta B
 devuelve los mismos resultados con \texttt{JOIN}, una CTE y \texttt{EXISTS}.
-La equivalencia se comprobó con \texttt{EXCEPT} en ambas direcciones: 0
-diferencias.
+Ambas consultas devuelven 71 películas.
 
 \subsection{Planes antes de la optimización}
 

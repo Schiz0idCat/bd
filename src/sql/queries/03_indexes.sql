@@ -12,7 +12,7 @@
 -- planificador parta del catálogo y recorra cientos de miles de filas, lo que
 -- resultó más lento que partir de las películas filtradas.
 --
---   psql -d peliculas -f src/sql/queries/04_indexes.sql
+--   psql -d peliculas -f src/sql/queries/03_indexes.sql
 -- ============================================================================
 
 BEGIN;

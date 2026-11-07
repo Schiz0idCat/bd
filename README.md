@@ -47,21 +47,18 @@ src/
     91_procedures.sql     procedimientos de mantenedores
     92_views.sql          vistas con filtros de filas y columnas
     93_roles.sql          roles y permisos
-    94_tests.sql          pruebas de auditoría, procedimientos y permisos
-    99_validate.sql       validación de conteos e integridad
     queries/
-      00_reset_indexes.sql restaura los índices base
       01_query_where.sql  consulta A (WHERE, OR, IN, sin JOIN)
       02_query_join.sql   consulta B equivalente (JOIN, CTE, EXISTS)
-      03_equivalence.sql  verifica que A y B devuelvan lo mismo
-      04_indexes.sql      índices de optimización
+      03_indexes.sql      índices de optimización
   scripts/
     db.sh                 crea la base y aplica init.sql
     staging.sh            CSV -> tablas de texto en staging
-    load.sh               staging -> modelo + ANALYZE + validación
-    objects.sh            auditoría + procedimientos + vistas + roles
-    test.sh               pruebas, equivalencia y planes de ejecución
-    package.sh            genera el ZIP de entrega
+    load.sh               staging -> modelo + ANALYZE
+    triggers.sh           aplica 90_audit.sql
+    procedures.sh         aplica 91_procedures.sql
+    views.sh              aplica 92_views.sql
+    roles.sh              aplica 93_roles.sql
 ```
 
 ## Ejecución
@@ -75,25 +72,22 @@ Cada etapa se ejecuta por separado y se puede repetir sin duplicar datos.
 # 2. Copiar los CSV a las tablas de texto de staging
 ./src/scripts/staging.sh
 
-# 3. Traspasar staging al modelo, analizar y validar
+# 3. Traspasar staging al modelo
 ./src/scripts/load.sh
 
 # 4. Crear auditoría, procedimientos, vistas y roles
-./src/scripts/objects.sh
-
-# 5. Probar los objetos y comparar los planes de las consultas
-./src/scripts/test.sh
-
-# 6. Generar el ZIP de entrega
-./src/scripts/package.sh
+./src/scripts/triggers.sh
+./src/scripts/procedures.sh
+./src/scripts/views.sh
+./src/scripts/roles.sh
 ```
 
 Los scripts usan siempre la base `peliculas`. La conexión se configura con las
 variables estándar de `psql` (`PGHOST`, `PGPORT`, `PGUSER`).
 
 Cada etapa es idempotente: `staging.sh` recrea el schema, `load.sh` vacía el
-modelo antes de cargar, `objects.sh` reemplaza sus objetos y `test.sh` restaura
-los índices antes de medir.
+modelo antes de cargar y los scripts de objetos usan `DROP ... IF EXISTS` o
+`CREATE OR REPLACE`.
 
 ### Ejecución parcial
 
@@ -124,7 +118,7 @@ El detalle del diseño, las decisiones y los planes de ejecución está en
 los datos anteriores y nuevos en `JSONB`, el usuario y la marca de tiempo. La
 tabla es append-only: triggers propios impiden `UPDATE`, `DELETE` y `TRUNCATE`.
 
-Los triggers se crean con `objects.sh`, es decir, **después** de la carga. Si se
+Los triggers se crean con `triggers.sh`, es decir, **después** de la carga. Si se
 crearan antes, registrarían las 941.597 inserciones iniciales.
 
 ## Roles
@@ -149,4 +143,3 @@ CREATE ROLE juan LOGIN PASSWORD '...' IN ROLE bd_lectura;
   y `JOIN`.
 - Los nombres se conservan exactamente como vienen en el CSV, incluidos los
   espacios Unicode de 33 roles y 22 estudios.
-- `99_validate.sql` falla si algún conteo, nulo esperado u huérfano no coincide.

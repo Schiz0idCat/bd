@@ -1,35 +1,24 @@
 #!/usr/bin/env bash
-
-# ETAPA 1: CSV -> tablas de texto del schema staging.
+# ============================================================================
+# ETAPA 1: carga los CSV en las tablas de texto del schema staging.
 #
-# Idempotente: 00_schema.sql elimina y recrea el schema completo, y cada
-# archivo de staging elimina su tabla antes de crearla y copiar el CSV.
+# Idempotente: 00_schema.sql elimina y recrea el schema completo.
 #
 #   ./src/scripts/staging.sh
 # ============================================================================
 
 set -euo pipefail
 
-ROOT="$(cd -- "$(dirname -- "$0")/../.." && pwd)"
-cd "$ROOT"
+cd "$(dirname -- "$0")/../.."
 
-DB="peliculas"
-PSQL=(psql -X -v ON_ERROR_STOP=1 -d "$DB")
-
-if ! "${PSQL[@]}" -tAc "SELECT to_regclass('public.movies')" | grep -q movies; then
-    echo "Error: la base '$DB' no existe o no tiene el modelo." >&2
-    echo "Ejecuta primero: ./src/scripts/db.sh" >&2
-    exit 1
-fi
-
-echo "==> Creando schema staging"
-"${PSQL[@]}" -f src/sql/staging/00_schema.sql
-
-echo "==> Copiando CSV a staging"
-for f in src/sql/staging/[0-9][0-9]_*.sql; do
-    [[ "$f" == *"/00_schema.sql" ]] && continue
-    echo "    $(basename "$f")"
-    "${PSQL[@]}" -f "$f"
-done
-
-echo "==> Staging completo."
+psql -X -v ON_ERROR_STOP=1 -d peliculas -f src/sql/staging/00_schema.sql
+psql -X -v ON_ERROR_STOP=1 -d peliculas -f src/sql/staging/01_movies.sql
+psql -X -v ON_ERROR_STOP=1 -d peliculas -f src/sql/staging/02_posters.sql
+psql -X -v ON_ERROR_STOP=1 -d peliculas -f src/sql/staging/03_countries.sql
+psql -X -v ON_ERROR_STOP=1 -d peliculas -f src/sql/staging/04_genres.sql
+psql -X -v ON_ERROR_STOP=1 -d peliculas -f src/sql/staging/05_themes.sql
+psql -X -v ON_ERROR_STOP=1 -d peliculas -f src/sql/staging/06_studios.sql
+psql -X -v ON_ERROR_STOP=1 -d peliculas -f src/sql/staging/07_languages.sql
+psql -X -v ON_ERROR_STOP=1 -d peliculas -f src/sql/staging/08_actors.sql
+psql -X -v ON_ERROR_STOP=1 -d peliculas -f src/sql/staging/09_crew.sql
+psql -X -v ON_ERROR_STOP=1 -d peliculas -f src/sql/staging/10_releases.sql
