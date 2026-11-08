@@ -1,14 +1,5 @@
--- ============================================================================
--- AUDITORÍA DE TRANSACCIONES
--- ============================================================================
--- Este script se aplica DESPUÉS de la carga inicial. Si se aplicara antes, los
--- triggers registrarían las 941.597 inserciones de la carga masiva.
---
---   psql -d peliculas -f src/sql/90_audit.sql
---
--- La tabla audit_log es append-only: un trigger impide UPDATE, DELETE y
--- TRUNCATE, de modo que el log no puede alterarse desde la aplicación.
--- ============================================================================
+-- Este script se aplica DESPUÉS de la carga inicial.
+-- Genera la tabla de auditoría.
 
 BEGIN;
 
@@ -32,13 +23,10 @@ CREATE INDEX idx_audit_log_table_time
 CREATE INDEX idx_audit_log_user
     ON audit_log (db_user, changed_at DESC);
 
--- ----------------------------------------------------------------------------
 -- Función genérica de auditoría
--- ----------------------------------------------------------------------------
--- TG_ARGV recibe los nombres de las columnas que forman la clave primaria de
--- la tabla auditada. Así la misma función sirve para claves simples y
--- compuestas.
--- ----------------------------------------------------------------------------
+-- 
+-- TG_ARGV recibe los nombres de las columnas que forman la clave primaria de la tabla auditada.
+-- Así la misma función sirve para claves simples y compuestas.
 
 CREATE OR REPLACE FUNCTION fn_audit_row()
 RETURNS TRIGGER

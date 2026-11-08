@@ -1,5 +1,4 @@
 -- Pasar studios.csv a studios y movie_studios.
--- Los nombres se dejan tal como vienen en el CSV.
 
 BEGIN;
 

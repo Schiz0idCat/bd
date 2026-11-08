@@ -1,5 +1,4 @@
 -- Deja el modelo vacío para que la carga se pueda repetir sin duplicar datos.
--- Se incluyen todas las tablas para no depender de CASCADE entre ellas.
 
 BEGIN;
 

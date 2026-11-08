@@ -1,10 +1,4 @@
--- ============================================================================
--- CONSULTA B: variante equivalente con JOIN, CTE y EXISTS
--- ============================================================================
--- Devuelve exactamente las mismas filas que 01_query_where.sql, pero con una
--- forma distinta: CTE para el filtro de películas, JOIN para géneros y EXISTS
--- para el país.
--- ============================================================================
+-- Películas de Drama o Comedia, estrenadas en Estados Unidos entre 2000 y 2009, con rating mayor o igual a 4.0.
 
 WITH base AS (
     SELECT

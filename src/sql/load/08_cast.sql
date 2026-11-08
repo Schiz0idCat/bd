@@ -1,5 +1,4 @@
 -- Pasar actors.csv a movie_cast.
--- Si el rol viene vacío se guarda como NULL.
 
 BEGIN;
 

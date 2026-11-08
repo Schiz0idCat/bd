@@ -1,5 +1,4 @@
 -- Pasar actores y crew a la tabla people.
--- UNION ya elimina los nombres repetidos.
 
 BEGIN;
 

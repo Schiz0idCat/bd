@@ -1,14 +1,4 @@
--- ============================================================================
--- CONSULTA A: variante sin JOIN (enlace por WHERE, OR e IN)
--- ============================================================================
--- Informe: películas de Drama o Comedia, estrenadas en Estados Unidos entre
--- 2000 y 2009, con rating >= 4.0.
---
--- Requisitos del enunciado cubiertos:
---   * enlace de tablas por WHERE (sin JOIN)
---   * operador OR
---   * operador IN
--- ============================================================================
+-- películas de Drama o Comedia, estrenadas en Estados Unidos entre 2000 y 2009, con rating >= 4.0.
 
 SELECT DISTINCT
     m.movie_id,
