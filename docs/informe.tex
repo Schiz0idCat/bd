@@ -127,7 +127,7 @@ masivas. Una prueba de alta, modificación y baja deja este log:
 \section{Procedimientos almacenados}
 % ============================================================================
 
-Se implementaron cinco procedimientos para los mantenedores:
+Se implementaron dos procedimientos para los mantenedores:
 
 \begin{table}[htbp]
     \centering
@@ -136,18 +136,10 @@ Se implementaron cinco procedimientos para los mantenedores:
         Procedimiento & comportamiento \\
         \hline
         \texttt{sp\_movie\_upsert} &
-        Exige nombre no vacío, año entre 1870 y 2100,
-        duración positiva y rating entre 0 y 5. \\
-        \texttt{sp\_movie\_delete} &
-        Eliminación de una película. Las relaciones se eliminan por
-        \texttt{ON DELETE CASCADE}. \\
+        Alta o modificación de una película. Exige nombre no vacío, año entre
+        1870 y 2100, duración positiva y rating entre 0 y 5. \\
         \texttt{sp\_studio\_delete} &
         No permite eliminar un estudio con películas asociadas. \\
-        \texttt{sp\_person\_merge} &
-        Fusiona dos personas: mueve reparto y crew y elimina el duplicado. \\
-        \texttt{sp\_register\_release} &
-        Registra un estreno. La fecha no puede ser anterior al año de la
-        película y crea los catálogos que falten. \\
         \hline
     \end{tabular}
     \caption{Procedimientos almacenados y sus reglas de negocio.}
@@ -176,8 +168,8 @@ Ambas consultas devuelven 71 películas.
 
 \subsection{Planes antes de la optimización}
 
-Ambas consultas devuelven 71 películas. Con los índices base, el planificador
-usa dos índices de una columna y luego visita el heap:
+Con los índices base, el planificador usa dos índices de una columna y luego
+visita el heap:
 
 \begin{verbatim}
 Consulta A (WHERE, OR, IN)
@@ -250,11 +242,12 @@ que partir de las 296 películas filtradas.
 \section{Usuarios y vistas}
 % ============================================================================
 
-Se crearon cinco vistas con filtros: \texttt{vw\_movies\_public} oculta
-descripción y póster; \texttt{vw\_movies\_recent} muestra solo películas desde
-2000; \texttt{vw\_releases\_public} muestra solo estrenos ya ocurridos;
-\texttt{vw\_releases\_upcoming} reserva los estrenos futuros; y
-\texttt{vw\_movie\_cast\_public} muestra el reparto con nombres legibles.
+Las vistas se usan para el nivel de acceso de solo lectura. El rol
+\texttt{bd\_lectura} no tiene permisos sobre las tablas base: solo puede
+consultar \texttt{vw\_movies\_public}, que filtra columnas (oculta descripción y
+póster), y \texttt{vw\_releases\_public}, que filtra filas (solo estrenos ya
+ocurridos). Los roles \texttt{bd\_mantenedor} y \texttt{bd\_admin} trabajan
+sobre las tablas y no necesitan vistas.
 
 La \autoref{tab:roles} resume los niveles de acceso.
 

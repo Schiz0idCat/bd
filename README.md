@@ -125,7 +125,7 @@ crearan antes, registrarían las 941.597 inserciones iniciales.
 
 | Rol | Acceso |
 |---|---|
-| `bd_lectura` | Solo vistas públicas (`vw_movies_public`, `vw_movies_recent`, `vw_releases_public`, `vw_movie_cast_public`) |
+| `bd_lectura` | Solo las vistas `vw_movies_public` y `vw_releases_public` |
 | `bd_mantenedor` | `SELECT` + `DML` sobre las tablas mantenidas + ejecución de procedimientos |
 | `bd_admin` | Control total |
 

@@ -1,25 +1,17 @@
--- ============================================================================
--- PROCEDIMIENTOS ALMACENADOS (MANTENEDORES)
--- ============================================================================
--- Se aplican después de crear el modelo (init.sql), antes o después de cargar
--- los datos. No dependen del staging.
---
---   psql -d peliculas -f src/sql/91_procedures.sql
---
--- Convención de transacciones:
---   * Éxito  -> COMMIT explícito dentro del procedimiento.
---   * Error  -> ROLLBACK explícito (regla de negocio) o RAISE EXCEPTION, que
---               aborta la transacción del llamador.
--- ============================================================================
-
 BEGIN;
 
--- ============================================================================
--- 1. Alta / modificación de películas
--- ============================================================================
--- Reglas de negocio: nombre obligatorio y no vacío, año en el rango histórico
--- admitido, duración positiva y rating entre 0 y 5.
--- ============================================================================
+-- Se eliminan los procedimientos anteriores para partir siempre del mismo estado.
+-- También elimina los que ya no forman parte de este script.
+DROP PROCEDURE IF EXISTS sp_movie_upsert;
+DROP PROCEDURE IF EXISTS sp_studio_delete;
+
+-- 1. modificación de películas
+
+-- Reglas de negocio:
+--      - nombre obligatorio y no vacío.
+--      - año en el rango histórico admitido.
+--      - admitido, duración positiva.
+--      - rating entre 0 y 5.
 
 CREATE OR REPLACE PROCEDURE sp_movie_upsert(
     p_movie_id      INTEGER,
@@ -87,35 +79,12 @@ BEGIN
 END;
 $$;
 
--- ============================================================================
--- 2. Baja de películas
--- ============================================================================
--- Las relaciones (reparto, crew, géneros, estrenos, etc.) se eliminan por
--- ON DELETE CASCADE.
--- ============================================================================
+-- 2. Eiminación de estudios
 
-CREATE OR REPLACE PROCEDURE sp_movie_delete(p_movie_id INTEGER)
-LANGUAGE plpgsql
-AS $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM movies WHERE movie_id = p_movie_id) THEN
-        ROLLBACK;
-        RAISE EXCEPTION 'La película % no existe', p_movie_id
-            USING ERRCODE = 'P0002';
-    END IF;
-
-    DELETE FROM movies WHERE movie_id = p_movie_id;
-
-    COMMIT;
-END;
-$$;
-
--- ============================================================================
--- 3. Baja de estudios con regla de negocio
--- ============================================================================
--- No se permite eliminar un estudio que tenga películas asociadas: primero
--- debe desvincularse o reasignarse. Si la regla se cumple, se elimina.
--- ============================================================================
+-- Reglas de negocio:
+--      - No se permite eliminar un estudio que tenga películas asociadas:
+--        primero debe desvincularse o reasignarse.
+--        Si la regla se cumple, se elimina.
 
 CREATE OR REPLACE PROCEDURE sp_studio_delete(p_studio_id INTEGER)
 LANGUAGE plpgsql
@@ -142,148 +111,6 @@ BEGIN
         RAISE EXCEPTION 'El estudio % no existe', p_studio_id
             USING ERRCODE = 'P0002';
     END IF;
-
-    COMMIT;
-END;
-$$;
-
--- ============================================================================
--- 4. Fusión de personas duplicadas
--- ============================================================================
--- Mueve el reparto y el crew de la persona duplicada hacia la persona que se
--- conserva, y luego elimina el duplicado. Todo ocurre en una transacción.
--- ============================================================================
-
-CREATE OR REPLACE PROCEDURE sp_person_merge(
-    p_keep_id   BIGINT,
-    p_remove_id BIGINT
-)
-LANGUAGE plpgsql
-AS $$
-BEGIN
-    IF p_keep_id = p_remove_id THEN
-        ROLLBACK;
-        RAISE EXCEPTION 'No se puede fusionar una persona consigo misma (%)',
-            p_keep_id
-            USING ERRCODE = '22023';
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM people WHERE person_id = p_keep_id) THEN
-        ROLLBACK;
-        RAISE EXCEPTION 'La persona a conservar % no existe', p_keep_id
-            USING ERRCODE = 'P0002';
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM people WHERE person_id = p_remove_id) THEN
-        ROLLBACK;
-        RAISE EXCEPTION 'La persona a eliminar % no existe', p_remove_id
-            USING ERRCODE = 'P0002';
-    END IF;
-
-    BEGIN
-        INSERT INTO movie_cast (movie_id, person_id, character_name)
-        SELECT movie_id, p_keep_id, character_name
-        FROM movie_cast
-        WHERE person_id = p_remove_id
-        ON CONFLICT DO NOTHING;
-
-        DELETE FROM movie_cast WHERE person_id = p_remove_id;
-
-        INSERT INTO movie_crew (movie_id, person_id, crew_role_id)
-        SELECT movie_id, p_keep_id, crew_role_id
-        FROM movie_crew
-        WHERE person_id = p_remove_id
-        ON CONFLICT DO NOTHING;
-
-        DELETE FROM movie_crew WHERE person_id = p_remove_id;
-
-        DELETE FROM people WHERE person_id = p_remove_id;
-    EXCEPTION
-        WHEN others THEN
-            RAISE EXCEPTION 'Fusión cancelada: %', SQLERRM
-                USING ERRCODE = 'P0001';
-    END;
-
-    COMMIT;
-END;
-$$;
-
--- ============================================================================
--- 5. Registro de estrenos con regla de negocio
--- ============================================================================
--- La fecha del estreno no puede ser anterior al año de la película (se admite
--- un año de tolerancia por preestrenos y festivales). Los catálogos que no
--- existan se crean automáticamente.
--- ============================================================================
-
-CREATE OR REPLACE PROCEDURE sp_register_release(
-    p_movie_id      INTEGER,
-    p_country       VARCHAR,
-    p_release_date  DATE,
-    p_type          VARCHAR,
-    p_certification VARCHAR DEFAULT NULL
-)
-LANGUAGE plpgsql
-AS $$
-DECLARE
-    v_year     SMALLINT;
-    v_country  SMALLINT;
-    v_type     SMALLINT;
-    v_cert     SMALLINT;
-BEGIN
-    IF p_movie_id IS NULL OR p_country IS NULL OR p_type IS NULL
-       OR p_release_date IS NULL THEN
-        RAISE EXCEPTION 'Película, país, fecha y tipo son obligatorios'
-            USING ERRCODE = '22023';
-    END IF;
-
-    SELECT release_year INTO v_year
-    FROM movies
-    WHERE movie_id = p_movie_id;
-
-    IF NOT FOUND THEN
-        ROLLBACK;
-        RAISE EXCEPTION 'La película % no existe', p_movie_id
-            USING ERRCODE = 'P0002';
-    END IF;
-
-    IF v_year IS NOT NULL
-       AND EXTRACT(YEAR FROM p_release_date) < v_year - 1 THEN
-        ROLLBACK;
-        RAISE EXCEPTION
-            'Estreno inválido: la película es de % y el estreno es del %',
-            v_year, p_release_date
-            USING ERRCODE = 'P0001';
-    END IF;
-
-    INSERT INTO countries (name) VALUES (p_country)
-    ON CONFLICT (name) DO NOTHING;
-    SELECT country_id INTO v_country FROM countries WHERE name = p_country;
-
-    INSERT INTO release_types (name) VALUES (p_type)
-    ON CONFLICT (name) DO NOTHING;
-    SELECT release_type_id INTO v_type FROM release_types WHERE name = p_type;
-
-    IF p_certification IS NOT NULL AND btrim(p_certification) <> '' THEN
-        INSERT INTO certifications (name) VALUES (p_certification)
-        ON CONFLICT (name) DO NOTHING;
-        SELECT certification_id INTO v_cert
-        FROM certifications WHERE name = p_certification;
-    END IF;
-
-    BEGIN
-        INSERT INTO releases (
-            movie_id, country_id, release_date, release_type_id,
-            certification_id
-        )
-        VALUES (p_movie_id, v_country, p_release_date, v_type, v_cert);
-    EXCEPTION
-        WHEN unique_violation THEN
-            RAISE EXCEPTION
-                'La película % ya tiene un estreno % en % el %',
-                p_movie_id, p_type, p_country, p_release_date
-                USING ERRCODE = 'P0001';
-    END;
 
     COMMIT;
 END;

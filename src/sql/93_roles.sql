@@ -1,23 +1,5 @@
--- ============================================================================
--- USUARIOS, PERMISOS Y NIVELES DE ACCESO
--- ============================================================================
--- Se crean roles sin login (NOLOGIN). Para cada usuario real se crea un rol
--- con LOGIN y se le asigna uno de estos roles:
---
---     CREATE ROLE juan LOGIN PASSWORD '...' IN ROLE bd_lectura;
---
--- Niveles:
---   bd_lectura     -> solo vistas públicas (columnas y filas filtradas)
---   bd_mantenedor  -> ejecuta los procedimientos de mantenimiento
---   bd_admin       -> control total
---
---   psql -d peliculas -f src/sql/93_roles.sql
--- ============================================================================
-
 BEGIN;
 
--- Se eliminan y recrean para que el script siempre parta del mismo estado.
--- DROP OWNED BY revoca los privilegios que tengan sobre los objetos.
 DO $$
 DECLARE
     r TEXT;
@@ -37,45 +19,28 @@ CREATE ROLE bd_lectura NOLOGIN;
 CREATE ROLE bd_mantenedor NOLOGIN;
 CREATE ROLE bd_admin NOLOGIN;
 
--- ----------------------------------------------------------------------------
--- Esquema: nadie crea objetos salvo el administrador
--- ----------------------------------------------------------------------------
-
+-- Nadie crea elementos, salvo el administrador
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
 GRANT USAGE ON SCHEMA public TO bd_lectura, bd_mantenedor, bd_admin;
 GRANT CREATE ON SCHEMA public TO bd_admin;
 
--- ----------------------------------------------------------------------------
--- Privilegios por defecto: se parte de cero
--- ----------------------------------------------------------------------------
-
+-- Se parte de cero
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM PUBLIC;
 REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM PUBLIC;
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC;
 REVOKE ALL ON ALL PROCEDURES IN SCHEMA public FROM PUBLIC;
 
--- Las funciones de trigger no se ejecutan directamente: solo desde el trigger.
+-- Las funciones de trigger no se ejecutan directamente
 REVOKE ALL ON FUNCTION fn_audit_row() FROM PUBLIC;
 REVOKE ALL ON FUNCTION fn_audit_log_immutable() FROM PUBLIC;
 
--- ----------------------------------------------------------------------------
 -- bd_lectura: solo vistas con filtros
--- ----------------------------------------------------------------------------
-
 GRANT SELECT ON
     vw_movies_public,
-    vw_movies_recent,
-    vw_releases_public,
-    vw_movie_cast_public
+    vw_releases_public
 TO bd_lectura;
 
--- ----------------------------------------------------------------------------
 -- bd_mantenedor: mantenedores a través de procedimientos
--- ----------------------------------------------------------------------------
--- Los procedimientos no son SECURITY DEFINER (lo que permite usar COMMIT y
--- ROLLBACK dentro de ellos), por lo que el rol necesita los privilegios DML
--- sobre las tablas que manipulan y USAGE sobre sus secuencias.
-
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO bd_mantenedor;
 GRANT INSERT, UPDATE, DELETE ON
     movies,
