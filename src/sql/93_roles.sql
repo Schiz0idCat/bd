@@ -56,17 +56,10 @@ TO bd_mantenedor;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO bd_mantenedor;
 GRANT EXECUTE ON ALL PROCEDURES IN SCHEMA public TO bd_mantenedor;
 
--- ----------------------------------------------------------------------------
 -- bd_admin: control total
--- ----------------------------------------------------------------------------
-
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO bd_admin;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO bd_admin;
 GRANT EXECUTE ON ALL PROCEDURES IN SCHEMA public TO bd_admin;
--- Necesario para que los triggers de auditoría puedan dispararse en sus DML.
 GRANT EXECUTE ON FUNCTION fn_audit_row() TO bd_admin;
-
--- El log es append-only incluso para el administrador: los triggers lo
--- impiden a nivel de fila. Solo el dueño del esquema puede deshabilitarlos.
 
 COMMIT;

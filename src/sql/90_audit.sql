@@ -61,9 +61,7 @@ BEGIN
 END;
 $$;
 
--- ----------------------------------------------------------------------------
 -- Inmutabilidad del log
--- ----------------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION fn_audit_log_immutable()
 RETURNS TRIGGER
@@ -86,9 +84,7 @@ CREATE TRIGGER trg_audit_log_no_truncate
     FOR EACH STATEMENT
     EXECUTE FUNCTION fn_audit_log_immutable();
 
--- ----------------------------------------------------------------------------
 -- Triggers sobre las tablas principales
--- ----------------------------------------------------------------------------
 
 -- Se eliminan primero para que el script se pueda ejecutar más de una vez.
 DROP TRIGGER IF EXISTS trg_audit_movies   ON movies;
