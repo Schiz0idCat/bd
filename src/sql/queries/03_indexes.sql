@@ -2,8 +2,6 @@
 
 BEGIN;
 
-DROP INDEX IF EXISTS idx_movie_genres_genre_movie;
-DROP INDEX IF EXISTS idx_movie_countries_country_movie;
 DROP INDEX IF EXISTS idx_movie_genres_genre;
 DROP INDEX IF EXISTS idx_movie_countries_country;
 

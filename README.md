@@ -52,13 +52,14 @@ src/
       02_query_join.sql   consulta B equivalente (JOIN, CTE, EXISTS)
       03_indexes.sql      índices de optimización
   scripts/
-    0_db.sh                 crea la base y aplica init.sql
-    1_staging.sh            CSV -> tablas de texto en staging
-    2_load.sh               staging -> modelo + ANALYZE
-    3_triggers.sh           aplica 90_audit.sql
-    4_procedures.sh         aplica 91_procedures.sql
-    5_views.sh              aplica 92_views.sql
-    6_roles.sh              aplica 93_roles.sql
+    0_data.sh               descarga el dataset desde Kaggle
+    1_db.sh                 crea la base y aplica init.sql
+    2_staging.sh            CSV -> tablas de texto en staging
+    3_load.sh               staging -> modelo + ANALYZE
+    4_triggers.sh           aplica 90_audit.sql
+    5_procedures.sh         aplica 91_procedures.sql
+    6_views.sh              aplica 92_views.sql
+    7_roles.sh              aplica 93_roles.sql
 ```
 
 ## Ejecución
@@ -66,32 +67,58 @@ src/
 Cada etapa se ejecuta por separado y se puede repetir sin duplicar datos.
 
 ```bash
+# 0. Descargar el dataset (opcional, si no están los CSV en data/)
+./src/scripts/0_data.sh
+
 # 1. Crear la base y el modelo (borra la base si ya existe)
-./src/scripts/0_db.sh
+./src/scripts/1_db.sh
 
 # 2. Copiar los CSV a las tablas de texto de staging
-./src/scripts/1_staging.sh
+./src/scripts/2_staging.sh
 
 # 3. Traspasar staging al modelo
-./src/scripts/2_load.sh
+./src/scripts/3_load.sh
 
 # 4. Crear auditoría, procedimientos, vistas y roles
-./src/scripts/3_triggers.sh
-./src/scripts/4_procedures.sh
-./src/scripts/5_views.sh
-./src/scripts/6_roles.sh
+./src/scripts/4_triggers.sh
+./src/scripts/5_procedures.sh
+./src/scripts/6_views.sh
+./src/scripts/7_roles.sh
 ```
+
+## Consultas y planes
+
+Las consultas y los índices de optimización están en `src/sql/queries/`.
+
+```bash
+# Consultas A y B
+psql -d peliculas -f src/sql/queries/01_query_where.sql
+psql -d peliculas -f src/sql/queries/02_query_join.sql
+
+# Plan antes de crear los índices
+psql -d peliculas -c "EXPLAIN (ANALYZE, BUFFERS) $(cat src/sql/queries/01_query_where.sql)"
+psql -d peliculas -c "EXPLAIN (ANALYZE, BUFFERS) $(cat src/sql/queries/02_query_join.sql)"
+
+# Índices de optimización
+psql -d peliculas -f src/sql/queries/03_indexes.sql
+
+# Plan después de crear los índices
+psql -d peliculas -c "EXPLAIN (ANALYZE, BUFFERS) $(cat src/sql/queries/01_query_where.sql)"
+psql -d peliculas -c "EXPLAIN (ANALYZE, BUFFERS) $(cat src/sql/queries/02_query_join.sql)"
+```
+
+En DBeaver también se puede abrir cada archivo y anteponer `EXPLAIN (ANALYZE, BUFFERS)` a la consulta.
 
 Los scripts usan siempre la base `peliculas`. La conexión se configura con las
 variables estándar de `psql` (`PGHOST`, `PGPORT`, `PGUSER`).
 
-Cada etapa es idempotente: `1_staging.sh` recrea el schema, `2_load.sh` vacía el
+Cada etapa es idempotente: `2_staging.sh` recrea el schema, `3_load.sh` vacía el
 modelo y desactiva los triggers de auditoría durante la carga, y los scripts de
 objetos usan `DROP ... IF EXISTS` o `CREATE OR REPLACE`.
 
-Al volver a ejecutar `6_roles.sh` se eliminan y recrean los roles, por lo que los
+Al volver a ejecutar `7_roles.sh` se eliminan y recrean los roles, por lo que los
 usuarios `LOGIN` que los usaban deben volver a recibir su rol con `GRANT`. Los
-roles son del clúster, no de la base: `0_db.sh` no los elimina.
+roles son del clúster, no de la base: `1_db.sh` no los elimina.
 
 ### Ejecución parcial
 
@@ -122,10 +149,10 @@ El detalle del diseño, las decisiones y los planes de ejecución está en
 los datos anteriores y nuevos en `JSONB`, el usuario y la marca de tiempo. La
 tabla es append-only: triggers propios impiden `UPDATE`, `DELETE` y `TRUNCATE`.
 
-Los triggers se crean con `3_triggers.sh`, es decir, **después** de la carga. Si
-se crearan antes, registrarían las 941.597 inserciones iniciales. `2_load.sh`
+Los triggers se crean con `4_triggers.sh`, es decir, **después** de la carga. Si
+se crearan antes, registrarían las 941.597 inserciones iniciales. `3_load.sh`
 desactiva los triggers durante la carga y los vuelve a activar al terminar, así
-que también se puede recargar sin llenar el log. `3_triggers.sh` conserva la
+que también se puede recargar sin llenar el log. `4_triggers.sh` conserva la
 tabla `audit_log` y su historial cuando se vuelve a ejecutar.
 
 ## Roles
