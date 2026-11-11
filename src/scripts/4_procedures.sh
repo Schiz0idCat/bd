@@ -2,7 +2,7 @@
 
 # ETAPA 4: crea los procedimientos almacenados de los mantenedores.
 #
-# usa CREATE OR REPLACE PROCEDURE.
+# Reemplaza los procedimientos vigentes y elimina los obsoletos.
 
 set -euo pipefail
 

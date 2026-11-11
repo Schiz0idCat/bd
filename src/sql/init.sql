@@ -37,6 +37,7 @@ CREATE TABLE movies (
     rating          NUMERIC(3,2),
     poster_link     TEXT,
 
+    CONSTRAINT movies_id_positive      CHECK (movie_id > 0),
     CONSTRAINT movies_name_not_blank  CHECK (btrim(name) <> ''),
     CONSTRAINT movies_year_range      CHECK (release_year BETWEEN 1870 AND 2100),
     CONSTRAINT movies_minute_positive CHECK (minute > 0),
@@ -51,42 +52,50 @@ CREATE TABLE movies (
 
 CREATE TABLE countries (
     country_id SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    name       VARCHAR(100) NOT NULL UNIQUE
+    name       VARCHAR(100) NOT NULL UNIQUE,
+    CONSTRAINT countries_name_not_blank CHECK (btrim(name) <> '')
 );
 
 CREATE TABLE genres (
     genre_id SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    name     VARCHAR(50) NOT NULL UNIQUE
+    name     VARCHAR(50) NOT NULL UNIQUE,
+    CONSTRAINT genres_name_not_blank CHECK (btrim(name) <> '')
 );
 
 CREATE TABLE themes (
     theme_id SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    name     VARCHAR(100) NOT NULL UNIQUE
+    name     VARCHAR(100) NOT NULL UNIQUE,
+    CONSTRAINT themes_name_not_blank CHECK (btrim(name) <> '')
 );
 
 CREATE TABLE studios (
     studio_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    name      VARCHAR(200) NOT NULL UNIQUE
+    name      VARCHAR(200) NOT NULL UNIQUE,
+    CONSTRAINT studios_name_not_blank CHECK (btrim(name) <> '')
 );
 
 CREATE TABLE language_types (
     language_type_id SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    name             VARCHAR(50) NOT NULL UNIQUE
+    name             VARCHAR(50) NOT NULL UNIQUE,
+    CONSTRAINT language_types_name_not_blank CHECK (btrim(name) <> '')
 );
 
 CREATE TABLE languages (
     language_id SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    name        VARCHAR(80) NOT NULL UNIQUE
+    name        VARCHAR(80) NOT NULL UNIQUE,
+    CONSTRAINT languages_name_not_blank CHECK (btrim(name) <> '')
 );
 
 CREATE TABLE crew_roles (
     crew_role_id SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    name         VARCHAR(50) NOT NULL UNIQUE
+    name         VARCHAR(50) NOT NULL UNIQUE,
+    CONSTRAINT crew_roles_name_not_blank CHECK (btrim(name) <> '')
 );
 
 CREATE TABLE release_types (
     release_type_id SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    name            VARCHAR(50) NOT NULL UNIQUE
+    name            VARCHAR(50) NOT NULL UNIQUE,
+    CONSTRAINT release_types_name_not_blank CHECK (btrim(name) <> '')
 );
 
 -- Clasificación por edades.
@@ -104,7 +113,8 @@ CREATE TABLE certifications (
 
 CREATE TABLE people (
     person_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    name      VARCHAR(255) NOT NULL UNIQUE
+    name      VARCHAR(255) NOT NULL UNIQUE,
+    CONSTRAINT people_name_not_blank CHECK (btrim(name) <> '')
 );
 
 -- ============================================================================

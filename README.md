@@ -86,8 +86,12 @@ Los scripts usan siempre la base `peliculas`. La conexión se configura con las
 variables estándar de `psql` (`PGHOST`, `PGPORT`, `PGUSER`).
 
 Cada etapa es idempotente: `1_staging.sh` recrea el schema, `2_load.sh` vacía el
-modelo antes de cargar y los scripts de objetos usan `DROP ... IF EXISTS` o
-`CREATE OR REPLACE`.
+modelo y desactiva los triggers de auditoría durante la carga, y los scripts de
+objetos usan `DROP ... IF EXISTS` o `CREATE OR REPLACE`.
+
+Al volver a ejecutar `6_roles.sh` se eliminan y recrean los roles, por lo que los
+usuarios `LOGIN` que los usaban deben volver a recibir su rol con `GRANT`. Los
+roles son del clúster, no de la base: `0_db.sh` no los elimina.
 
 ### Ejecución parcial
 
@@ -118,16 +122,19 @@ El detalle del diseño, las decisiones y los planes de ejecución está en
 los datos anteriores y nuevos en `JSONB`, el usuario y la marca de tiempo. La
 tabla es append-only: triggers propios impiden `UPDATE`, `DELETE` y `TRUNCATE`.
 
-Los triggers se crean con `3_triggers.sh`, es decir, **después** de la carga. Si se
-crearan antes, registrarían las 941.597 inserciones iniciales.
+Los triggers se crean con `3_triggers.sh`, es decir, **después** de la carga. Si
+se crearan antes, registrarían las 941.597 inserciones iniciales. `2_load.sh`
+desactiva los triggers durante la carga y los vuelve a activar al terminar, así
+que también se puede recargar sin llenar el log. `3_triggers.sh` conserva la
+tabla `audit_log` y su historial cuando se vuelve a ejecutar.
 
 ## Roles
 
 | Rol | Acceso |
 |---|---|
 | `bd_lectura` | Solo las vistas `vw_movies_public` y `vw_releases_public` |
-| `bd_mantenedor` | `SELECT` + `DML` sobre las tablas mantenidas + ejecución de procedimientos |
-| `bd_admin` | Control total |
+| `bd_mantenedor` | `SELECT` general, `INSERT`/`UPDATE` en `movies`, `DELETE` en `studios` y ejecución de procedimientos |
+| `bd_admin` | Acceso total de lectura/escritura sobre tablas y secuencias, ejecución de procedimientos y lectura de `audit_log` |
 
 Los roles son `NOLOGIN`. Para un usuario real:
 
@@ -138,7 +145,8 @@ CREATE ROLE juan LOGIN PASSWORD '...' IN ROLE bd_lectura;
 ## Notas de carga
 
 - Los CSV se copian con `\copy` a tablas `UNLOGGED` del schema `staging`, sin
-  FKs ni constraints.
+  FKs ni constraints. No son `TEMPORARY` porque deben sobrevivir entre los
+  scripts de staging y de traspaso.
 - El traspaso usa SQL simple: `INSERT ... SELECT`, `CAST`, `NULLIF`, `DISTINCT`
   y `JOIN`.
 - Los nombres se conservan exactamente como vienen en el CSV, incluidos los

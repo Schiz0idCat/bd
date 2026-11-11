@@ -97,10 +97,11 @@ en los procedimientos almacenados.
 % ============================================================================
 
 Los CSV se copian con \texttt{\textbackslash copy} a tablas \texttt{UNLOGGED}
-del schema \texttt{staging}, sin claves foráneas ni restricciones. Luego los
-scripts de \texttt{load} traspasan los datos aplicando \texttt{CAST},
-\texttt{NULLIF}, \texttt{DISTINCT} y \texttt{JOIN} para resolver los catálogos
-por nombre.
+del schema \texttt{staging}, sin claves foráneas ni restricciones. No son tablas
+\texttt{TEMPORARY} porque deben sobrevivir entre los scripts de staging y de
+traspaso. Luego los scripts de \texttt{load} traspasan los datos aplicando
+\texttt{CAST}, \texttt{NULLIF}, \texttt{DISTINCT} y \texttt{JOIN} para resolver
+los catálogos por nombre.
 
 % ============================================================================
 \section{Triggers de auditoría}
@@ -149,10 +150,12 @@ Se implementaron dos procedimientos para los mantenedores:
 Todos validan sus datos y terminan con \texttt{COMMIT}. Si se incumple una regla
 de negocio hacen \texttt{ROLLBACK} y lanzan una excepción; por ejemplo,
 \texttt{sp\_studio\_delete} rechaza el borrado si el estudio tiene películas.
-Los procedimientos no usan \texttt{SECURITY DEFINER}, porque PostgreSQL no
-permite \texttt{COMMIT} ni \texttt{ROLLBACK} en ellos; por eso el rol
-\texttt{bd\_mantenedor} tiene permisos \texttt{DML} sobre las tablas que
-mantiene.
+Los procedimientos usan \texttt{SECURITY INVOKER} (el modo por defecto), por lo
+que se ejecutan con los privilegios de quien los llama. Por eso
+\texttt{bd\_mantenedor} tiene \texttt{INSERT} y \texttt{UPDATE} sobre
+\texttt{movies}, \texttt{DELETE} sobre \texttt{studios} y \texttt{EXECUTE} sobre
+los procedimientos. Si se usara \texttt{SECURITY DEFINER}, bastaría
+\texttt{EXECUTE}, pero el procedimiento se ejecutaría como su dueño.
 
 % ============================================================================
 \section{Consultas y optimización}
@@ -203,7 +206,7 @@ CREATE INDEX idx_movies_year_rating
 También se probaron índices compuestos por género y por país, pero el
 planificador partía del catálogo y recorría cientos de miles de filas, por lo
 que resultaban más lentos. Se descartaron y se eliminaron los índices de una
-sola columna, porque las claves primarias de las relaciones ya cubren la
+sola columna sobre las relaciones, porque las claves primarias ya cubren la
 búsqueda por \texttt{movie\_id}.
 
 \subsection{Planes después de la optimización}
@@ -260,11 +263,12 @@ La \autoref{tab:roles} resume los niveles de acceso.
         \texttt{bd\_lectura} &
         Solo las vistas públicas. No puede leer las tablas base. \\
         \texttt{bd\_mantenedor} &
-        \texttt{SELECT}, \texttt{DML} sobre las tablas mantenidas y ejecución de
-        los procedimientos. \\
+        \texttt{SELECT} general, \texttt{INSERT}/\texttt{UPDATE} en
+        \texttt{movies}, \texttt{DELETE} en \texttt{studios} y ejecución de los
+        procedimientos. \\
         \texttt{bd\_admin} &
-        Control total del esquema, tablas, secuencias, procedimientos y
-        \texttt{audit\_log}. \\
+        Acceso total de lectura y escritura sobre tablas y secuencias, ejecución
+        de procedimientos y lectura de \texttt{audit\_log}. \\
         \hline
     \end{tabular}
     \caption{Roles y niveles de acceso.}

@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
-# ============================================================================
+
 # ETAPA 5: crea las vistas con filtros de filas y columnas.
-#
-# Idempotente: usa CREATE OR REPLACE VIEW.
-#
-#   ./src/scripts/5_views.sh
-# ============================================================================
 
 set -euo pipefail
 

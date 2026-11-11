@@ -2,7 +2,7 @@
 
 # crea la tabla de auditoría, la función y los triggers de log.
 #
-# El script elimina la tabla y los triggers antes de crearlos.
+# Conserva audit_log si ya existe y recrea sus triggers.
 
 set -euo pipefail
 

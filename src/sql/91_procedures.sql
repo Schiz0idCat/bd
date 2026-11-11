@@ -1,9 +1,11 @@
 BEGIN;
 
--- Se eliminan los procedimientos anteriores para partir siempre del mismo estado.
--- También elimina los que ya no forman parte de este script.
-DROP PROCEDURE IF EXISTS sp_movie_upsert;
-DROP PROCEDURE IF EXISTS sp_studio_delete;
+-- Se eliminan solo los procedimientos que ya no forman parte del script.
+-- Los dos procedimientos vigentes se reemplazan con CREATE OR REPLACE para
+-- conservar sus permisos de ejecución.
+DROP PROCEDURE IF EXISTS sp_movie_delete;
+DROP PROCEDURE IF EXISTS sp_person_merge;
+DROP PROCEDURE IF EXISTS sp_register_release;
 
 -- 1. modificación de películas
 
@@ -27,26 +29,31 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     IF p_movie_id IS NULL OR p_movie_id <= 0 THEN
+        ROLLBACK;
         RAISE EXCEPTION 'movie_id inválido: %', p_movie_id
             USING ERRCODE = '22023';
     END IF;
 
     IF p_name IS NULL OR btrim(p_name) = '' THEN
+        ROLLBACK;
         RAISE EXCEPTION 'El nombre de la película no puede estar vacío'
             USING ERRCODE = '22023';
     END IF;
 
     IF p_release_year IS NOT NULL AND p_release_year NOT BETWEEN 1870 AND 2100 THEN
+        ROLLBACK;
         RAISE EXCEPTION 'Año de estreno fuera de rango (1870-2100): %', p_release_year
             USING ERRCODE = '22023';
     END IF;
 
     IF p_minute IS NOT NULL AND p_minute <= 0 THEN
+        ROLLBACK;
         RAISE EXCEPTION 'La duración debe ser mayor que cero: %', p_minute
             USING ERRCODE = '22023';
     END IF;
 
     IF p_rating IS NOT NULL AND p_rating NOT BETWEEN 0 AND 5 THEN
+        ROLLBACK;
         RAISE EXCEPTION 'El rating debe estar entre 0 y 5: %', p_rating
             USING ERRCODE = '22023';
     END IF;
@@ -70,6 +77,7 @@ BEGIN
             poster_link  = EXCLUDED.poster_link;
     EXCEPTION
         WHEN check_violation OR not_null_violation OR unique_violation THEN
+            ROLLBACK;
             RAISE EXCEPTION 'No se pudo guardar la película %: %',
                 p_movie_id, SQLERRM
                 USING ERRCODE = 'P0001';

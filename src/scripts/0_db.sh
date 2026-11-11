@@ -6,7 +6,7 @@ set -euo pipefail
 DB_NAME="peliculas"
 SCHEMA="$(cd -- "$(dirname -- "$0")" && pwd)/../sql/init.sql"
 
-if psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" | grep -q 1; then
+if psql -X -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" | grep -q 1; then
     echo "Borrando base de datos: '$DB_NAME'..."
     dropdb --force -- "$DB_NAME"
 fi

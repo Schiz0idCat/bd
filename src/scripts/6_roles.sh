@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
-#
+
 # crea los roles y asigna los permisos de acceso.
-#
-# Idempotente: elimina los roles y los vuelve a crear desde cero.
-#
-#   ./src/scripts/6_roles.sh
-# ============================================================================
 
 set -euo pipefail
 

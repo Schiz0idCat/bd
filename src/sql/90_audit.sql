@@ -3,9 +3,8 @@
 
 BEGIN;
 
-DROP TABLE IF EXISTS audit_log CASCADE;
-
-CREATE TABLE audit_log (
+-- Se conserva la tabla si ya existe para no perder el historial ni sus permisos.
+CREATE TABLE IF NOT EXISTS audit_log (
     audit_id    BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     table_name  TEXT        NOT NULL,
     operation   CHAR(1)     NOT NULL,
@@ -18,9 +17,9 @@ CREATE TABLE audit_log (
     CONSTRAINT audit_log_operation_valid CHECK (operation IN ('I', 'U', 'D'))
 );
 
-CREATE INDEX idx_audit_log_table_time
+CREATE INDEX IF NOT EXISTS idx_audit_log_table_time
     ON audit_log (table_name, changed_at DESC);
-CREATE INDEX idx_audit_log_user
+CREATE INDEX IF NOT EXISTS idx_audit_log_user
     ON audit_log (db_user, changed_at DESC);
 
 -- Función genérica de auditoría
@@ -73,6 +72,9 @@ BEGIN
         USING ERRCODE = 'insufficient_privilege';
 END;
 $$;
+
+DROP TRIGGER IF EXISTS trg_audit_log_immutable ON audit_log;
+DROP TRIGGER IF EXISTS trg_audit_log_no_truncate ON audit_log;
 
 CREATE TRIGGER trg_audit_log_immutable
     BEFORE UPDATE OR DELETE ON audit_log
