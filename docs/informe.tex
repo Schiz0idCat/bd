@@ -97,9 +97,8 @@ en los procedimientos almacenados.
 % ============================================================================
 
 Los CSV se copian con \texttt{\textbackslash copy} a tablas \texttt{UNLOGGED}
-del schema \texttt{staging}, sin claves foráneas ni restricciones. No son tablas
-\texttt{TEMPORARY} porque deben sobrevivir entre los scripts de staging y de
-traspaso. Luego los scripts de \texttt{load} traspasan los datos aplicando
+del schema \texttt{staging}, sin claves foráneas ni restricciones.
+Luego los scripts de \texttt{load} traspasan los datos aplicando
 \texttt{CAST}, \texttt{NULLIF}, \texttt{DISTINCT} y \texttt{JOIN} para resolver
 los catálogos por nombre.
 
@@ -137,7 +136,7 @@ Se implementaron dos procedimientos para los mantenedores:
         Procedimiento & comportamiento \\
         \hline
         \texttt{sp\_movie\_upsert} &
-        Alta o modificación de una película. Exige nombre no vacío, año entre
+        Subida o modificación de una película. Exige nombre no vacío, año entre
         1870 y 2100, duración positiva y rating entre 0 y 5. \\
         \texttt{sp\_studio\_delete} &
         No permite eliminar un estudio con películas asociadas. \\
@@ -148,8 +147,7 @@ Se implementaron dos procedimientos para los mantenedores:
 \end{table}
 
 Todos validan sus datos y terminan con \texttt{COMMIT}. Si se incumple una regla
-de negocio hacen \texttt{ROLLBACK} y lanzan una excepción; por ejemplo,
-\texttt{sp\_studio\_delete} rechaza el borrado si el estudio tiene películas.
+de negocio hacen \texttt{ROLLBACK} y lanzan una excepción.
 Los procedimientos usan \texttt{SECURITY INVOKER} (el modo por defecto), por lo
 que se ejecutan con los privilegios de quien los llama. Por eso
 \texttt{bd\_mantenedor} tiene \texttt{INSERT} y \texttt{UPDATE} sobre
@@ -195,24 +193,17 @@ Execution Time: 5.891 ms
 
 \subsection{Índices creados}
 
-Se creó un índice que cubre el filtro de año y rating y devuelve las columnas
-del \texttt{SELECT} sin visitar el heap:
+Se creó un índice que cubre el filtro de año y rating:
 
 \begin{verbatim}
 CREATE INDEX idx_movies_year_rating
     ON movies (release_year, rating) INCLUDE (movie_id, name);
 \end{verbatim}
 
-También se probaron índices compuestos por género y por país, pero el
-planificador partía del catálogo y recorría cientos de miles de filas, por lo
-que resultaban más lentos. Se descartaron y se eliminaron los índices de una
-sola columna sobre las relaciones, porque las claves primarias ya cubren la
-búsqueda por \texttt{movie\_id}.
-
 \subsection{Planes después de la optimización}
 
 Los dos planes cambian el acceso a \texttt{movies} por un \texttt{Index Only
-Scan} sobre el nuevo índice, sin visitar el heap:
+Scan} sobre el nuevo índice:
 
 \begin{verbatim}
 Consulta A
@@ -250,9 +241,10 @@ Las vistas se usan para el nivel de acceso de solo lectura. El rol
 consultar \texttt{vw\_movies\_public}, que filtra columnas (oculta descripción y
 póster), y \texttt{vw\_releases\_public}, que filtra filas (solo estrenos ya
 ocurridos). Los roles \texttt{bd\_mantenedor} y \texttt{bd\_admin} trabajan
-sobre las tablas y no necesitan vistas.
-
-La \autoref{tab:roles} resume los niveles de acceso.
+sobre las tablas y no necesitan vistas. Cabe aclarar que como este dataset
+no tiene lógica de dominio muy compleja relativa a autenticación y autorización,
+las decisiones sobre qué filtran las vistas o qué permisos tienen los roles es
+bastante arbitraria.
 
 \begin{table}[htbp]
     \centering
@@ -277,20 +269,5 @@ La \autoref{tab:roles} resume los niveles de acceso.
 
 Con \texttt{SET ROLE} se comprobó que cada rol accede solo a lo permitido y que
 \texttt{audit\_log} rechaza \texttt{UPDATE} y \texttt{TRUNCATE}.
-
-% ============================================================================
-\section{Conclusiones}
-% ============================================================================
-
-\begin{itemize}
-    \item La carga en dos capas permitió separar los datos crudos de las
-    transformaciones y validar los conteos al final.
-    \item El modelo de 19 tablas evita redundancia y mantiene la integridad
-    mediante claves y restricciones.
-    \item La comparación de planes permite justificar los índices creados y su
-    efecto en las consultas.
-    \item Los roles y las vistas permiten exponer el catálogo sin dar acceso
-    directo a las tablas base.
-\end{itemize}
 
 \end{document}
